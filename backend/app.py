@@ -21,20 +21,31 @@ def analyze_transactions(df):
         df['Amount'] = pd.to_numeric(df['Amount'], errors='coerce').fillna(0)
         
         # Feature Engineering: Aggregation by AccountID
-        # Features: Average Amount, Transaction Count, Std Dev of Amount
+        # Features: Average Amount, Transaction Count, Std Dev of Amount, Max Amount, Total Volume
         features = df.groupby('AccountID')['Amount'].agg(
             Avg_Amount='mean',
             Txn_Count='count',
-            Std_Amount='std'
+            Std_Amount='std',
+            Max_Amount='max',
+            Total_Volume='sum'
         ).fillna(0)
         
         # Determine features for model
-        feature_data = features[['Avg_Amount', 'Txn_Count', 'Std_Amount']]
+        feature_data = features[['Avg_Amount', 'Txn_Count', 'Std_Amount', 'Max_Amount', 'Total_Volume']]
         
         if feature_data.empty:
             return {"error": "Not enough data to analyze."}
 
-        # Standardize features
+        # Baseline: Z-score for Amount
+        # This helps in identifying gross outliers based on simple statistics
+        mean_vol = features['Total_Volume'].mean()
+        std_vol = features['Total_Volume'].std()
+        if std_vol > 0:
+            features['Z_Score'] = (features['Total_Volume'] - mean_vol) / std_vol
+        else:
+            features['Z_Score'] = 0
+
+        # Standardize features for ML
         scaler = StandardScaler()
         X_scaled = scaler.fit_transform(feature_data)
 
@@ -68,7 +79,10 @@ def analyze_transactions(df):
             results.append({
                 "AccountID": str(account_id),
                 "Avg_Amount": round(row['Avg_Amount'], 2),
+                "Max_Amount": round(row['Max_Amount'], 2),
+                "Total_Volume": round(row['Total_Volume'], 2),
                 "Txn_Count": int(row['Txn_Count']),
+                "Z_Score": round(row['Z_Score'], 2),
                 "Trust_Score": row['Trust_Score'],
                 "Risk_Level": row['Risk_Level']
             })

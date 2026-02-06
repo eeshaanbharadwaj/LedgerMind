@@ -1,6 +1,9 @@
 import { useState } from 'react';
 import axios from 'axios';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from 'recharts';
+import {
+    BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell,
+    PieChart, Pie, ScatterChart, Scatter, ZAxis
+} from 'recharts';
 
 // Simple reusable card component
 const SummaryCard = ({ title, value, color, borderColor }) => (
@@ -19,6 +22,7 @@ function App() {
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
+    const [searchTerm, setSearchTerm] = useState('');
 
     const handleFileChange = (e) => {
         setFile(e.target.files[0]);
@@ -37,7 +41,6 @@ function App() {
         formData.append('file', file);
 
         try {
-            // Assuming backend is at localhost:5000
             const response = await axios.post('http://127.0.0.1:5000/analyze', formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
@@ -52,11 +55,34 @@ function App() {
         }
     };
 
-    // Prepare chart data: Distribution of Trust Scores
-    // We can group scores into buckets or just show account trust scores directly if not too many.
-    // For summary, let's just plot Trust Scores of High Risk vs Low Risk or top risky accounts.
-    // Let's sort by Trust Score (ascending) to show risky ones first.
-    const chartData = data?.results ? [...data.results].sort((a, b) => a.Trust_Score - b.Trust_Score) : [];
+    const downloadReport = () => {
+        if (!data?.results) return;
+        const headers = ["AccountID", "Avg_Amount", "Max_Amount", "Total_Volume", "Txn_Count", "Z_Score", "Trust_Score", "Risk_Level"];
+        const csvContent = [
+            headers.join(","),
+            ...data.results.map(row => headers.map(h => row[h]).join(","))
+        ].join("\n");
+
+        const blob = new Blob([csvContent], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `LedgerMind_Report_${new Date().toISOString().slice(0, 10)}.csv`;
+        a.click();
+    };
+
+    // Filter results based on search term
+    const filteredResults = data?.results ? data.results.filter(acc =>
+        acc.AccountID.toLowerCase().includes(searchTerm.toLowerCase())
+    ) : [];
+
+    const chartData = [...filteredResults].sort((a, b) => a.Trust_Score - b.Trust_Score);
+
+    // Pie Chart Data
+    const pieData = [
+        { name: 'High Risk', value: data?.summary.high_risk_accounts || 0, color: '#ef4444' },
+        { name: 'Low Risk', value: data?.summary.low_risk_accounts || 0, color: '#14b8a6' },
+    ];
 
     return (
         <div className="min-h-screen bg-darker text-gray-200 p-8 font-sans selection:bg-primary selection:text-white">
@@ -116,6 +142,26 @@ function App() {
                 {data && (
                     <div className="space-y-8 animate-fade-in-up">
 
+                        {/* Search and Action Bar */}
+                        <div className="flex flex-col md:flex-row gap-4 items-center justify-between bg-card p-4 rounded-xl border border-gray-700/50">
+                            <div className="relative w-full md:w-96">
+                                <input
+                                    type="text"
+                                    placeholder="Search Account ID..."
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    className="w-full bg-dark/50 border border-gray-600 rounded-lg py-2 px-4 text-sm focus:outline-none focus:border-primary transition-colors"
+                                />
+                            </div>
+                            <button
+                                onClick={downloadReport}
+                                className="flex items-center gap-2 bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-all"
+                            >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                                Download Report
+                            </button>
+                        </div>
+
                         {/* Summary Cards */}
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                             <SummaryCard
@@ -139,26 +185,76 @@ function App() {
                         </div>
 
                         {/* Charts Section */}
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            {/* Bar Chart */}
+                            <div className="bg-card p-6 rounded-2xl border border-gray-700/50 shadow-xl">
+                                <h2 className="text-xl font-bold mb-6 text-gray-200">Trust Scores</h2>
+                                <div className="h-64 w-full">
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <BarChart data={chartData}>
+                                            <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+                                            <XAxis dataKey="AccountID" stroke="#94a3b8" fontSize={10} />
+                                            <YAxis stroke="#94a3b8" domain={[0, 100]} />
+                                            <Tooltip contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #475569' }} />
+                                            <Bar dataKey="Trust_Score" fill="#14b8a6">
+                                                {chartData.map((entry, index) => (
+                                                    <Cell key={`cell-${index}`} fill={entry.Trust_Score < 50 ? '#ef4444' : '#14b8a6'} />
+                                                ))}
+                                            </Bar>
+                                        </BarChart>
+                                    </ResponsiveContainer>
+                                </div>
+                            </div>
+
+                            {/* Pie Chart & Scatter Plot Container */}
+                            <div className="grid grid-cols-1 gap-6">
+                                <div className="bg-card p-6 rounded-2xl border border-gray-700/50 shadow-xl flex items-center justify-around">
+                                    <div className="w-1/2 h-48">
+                                        <ResponsiveContainer width="100%" height="100%">
+                                            <PieChart>
+                                                <Pie
+                                                    data={pieData}
+                                                    innerRadius={60}
+                                                    outerRadius={80}
+                                                    paddingAngle={5}
+                                                    dataKey="value"
+                                                >
+                                                    {pieData.map((entry, index) => (
+                                                        <Cell key={`cell-${index}`} fill={entry.color} />
+                                                    ))}
+                                                </Pie>
+                                                <Tooltip />
+                                            </PieChart>
+                                        </ResponsiveContainer>
+                                    </div>
+                                    <div className="space-y-2">
+                                        {pieData.map(d => (
+                                            <div key={d.name} className="flex items-center gap-2">
+                                                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: d.color }}></div>
+                                                <span className="text-sm text-gray-400">{d.name}: {d.value}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Behavior Analysis Plot */}
                         <div className="bg-card p-6 rounded-2xl border border-gray-700/50 shadow-xl">
-                            <h2 className="text-xl font-bold mb-6 text-gray-200">Trust Score Distribution (Sorted by Risk)</h2>
-                            <div className="h-80 w-full">
+                            <h2 className="text-xl font-bold mb-6 text-gray-200">Behavior Analysis (Total Volume vs Count)</h2>
+                            <div className="h-64 w-full">
                                 <ResponsiveContainer width="100%" height="100%">
-                                    <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                                        <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-                                        <XAxis dataKey="AccountID" stroke="#94a3b8" />
-                                        <YAxis stroke="#94a3b8" domain={[0, 100]} />
-                                        <Tooltip
-                                            contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #475569', color: '#f1f5f9' }}
-                                            itemStyle={{ color: '#f1f5f9' }}
-                                            cursor={{ fill: '#334155', opacity: 0.4 }}
-                                        />
-                                        <Legend />
-                                        <Bar dataKey="Trust_Score" name="Trust Score" radius={[4, 4, 0, 0]}>
-                                            {chartData.map((entry, index) => (
+                                    <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+                                        <CartesianGrid stroke="#334155" />
+                                        <XAxis type="number" dataKey="Txn_Count" name="Txn Count" stroke="#94a3b8" label={{ value: 'Txn Count', position: 'bottom', fill: '#94a3b8' }} />
+                                        <YAxis type="number" dataKey="Total_Volume" name="Volume" stroke="#94a3b8" label={{ value: 'Volume ($)', angle: -90, position: 'left', fill: '#94a3b8' }} />
+                                        <Tooltip cursor={{ strokeDasharray: '3 3' }} />
+                                        <Scatter name="Accounts" data={filteredResults}>
+                                            {filteredResults.map((entry, index) => (
                                                 <Cell key={`cell-${index}`} fill={entry.Trust_Score < 50 ? '#ef4444' : '#14b8a6'} />
                                             ))}
-                                        </Bar>
-                                    </BarChart>
+                                        </Scatter>
+                                    </ScatterChart>
                                 </ResponsiveContainer>
                             </div>
                         </div>
@@ -166,15 +262,17 @@ function App() {
                         {/* Detailed Table */}
                         <div className="bg-card rounded-2xl border border-gray-700/50 shadow-xl overflow-hidden">
                             <div className="p-6 border-b border-gray-700/50">
-                                <h2 className="text-xl font-bold text-gray-200">Account Risk Analysis</h2>
+                                <h2 className="text-xl font-bold text-gray-200">Detailed Risk Analysis</h2>
                             </div>
                             <div className="overflow-x-auto">
                                 <table className="w-full text-left text-sm text-gray-400">
                                     <thead className="bg-dark/50 text-gray-200 uppercase text-xs font-semibold">
                                         <tr>
                                             <th className="px-6 py-4">Account ID</th>
-                                            <th className="px-6 py-4">Avg Amount</th>
-                                            <th className="px-6 py-4">Txn Count</th>
+                                            <th className="px-6 py-4">Avg Amt</th>
+                                            <th className="px-6 py-4">Max Amt</th>
+                                            <th className="px-6 py-4">Total Vol</th>
+                                            <th className="px-6 py-4">Z-Score</th>
                                             <th className="px-6 py-4">Trust Score</th>
                                             <th className="px-6 py-4">Status</th>
                                         </tr>
@@ -183,11 +281,17 @@ function App() {
                                         {chartData.map((row) => (
                                             <tr key={row.AccountID} className="hover:bg-white/5 transition-colors">
                                                 <td className="px-6 py-4 font-mono text-gray-300">{row.AccountID}</td>
-                                                <td className="px-6 py-4">${row.Avg_Amount.toFixed(2)}</td>
-                                                <td className="px-6 py-4">{row.Txn_Count}</td>
+                                                <td className="px-6 py-4">${row.Avg_Amount}</td>
+                                                <td className="px-6 py-4">${row.Max_Amount}</td>
+                                                <td className="px-6 py-4">${row.Total_Volume}</td>
+                                                <td className="px-6 py-4">
+                                                    <span className={`${Math.abs(row.Z_Score) > 2 ? 'text-orange-400' : 'text-gray-400'}`}>
+                                                        {row.Z_Score}
+                                                    </span>
+                                                </td>
                                                 <td className="px-6 py-4 font-bold">
                                                     <span className={`${row.Trust_Score < 50 ? 'text-red-400' : 'text-primary'}`}>
-                                                        {row.Trust_Score}
+                                                        {row.Trust_Score}%
                                                     </span>
                                                 </td>
                                                 <td className="px-6 py-4">
