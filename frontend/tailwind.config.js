@@ -7,11 +7,19 @@ export default {
     theme: {
         extend: {
             colors: {
-                primary: "#14b8a6", // Teal
-                secondary: "#3b82f6", // Blue
-                dark: "#0f172a", // Slate 900
-                darker: "#020617", // Slate 950
-                card: "#1e293b", // Slate 800
+                primary: {
+                    DEFAULT: "#00f0ff", // Neon Cyan
+                    glow: "#00f0ff80",
+                },
+                secondary: {
+                    DEFAULT: "#7000ff", // Neon Purple
+                    glow: "#7000ff80",
+                },
+                accent: "#ff003c", // Cyber Punk Red
+                dark: "#050510", // Deep Space Blue/Black
+                darker: "#020205", // Almost Black
+                card: "#0a0a1f", // Dark Blue-ish Gray
+                surface: "#12122a", // Lighter surface
             }
         },
     },

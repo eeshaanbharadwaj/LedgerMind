@@ -4,20 +4,41 @@
 
 @layer base {
   body {
-    @apply bg-darker text-white font-sans antialiased;
+    @apply bg-darker text-gray-200 font-sans antialiased overflow-x-hidden;
+    background-image:
+      radial-gradient(circle at 15% 50%, rgba(112, 0, 255, 0.08), transparent 25%),
+      radial-gradient(circle at 85% 30%, rgba(0, 240, 255, 0.08), transparent 25%);
+    background-attachment: fixed;
   }
 }
 
-.custom-scrollbar::-webkit-scrollbar {
-  width: 8px;
+.glass-panel {
+  @apply bg-card/60 backdrop-blur-md border border-white/5 shadow-xl;
 }
-.custom-scrollbar::-webkit-scrollbar-track {
-  background: #1e293b; 
+
+.text-glow {
+  text-shadow: 0 0 10px rgba(0, 240, 255, 0.5);
 }
-.custom-scrollbar::-webkit-scrollbar-thumb {
-  background: #475569; 
-  border-radius: 4px;
+
+.border-glow {
+  box-shadow: 0 0 15px -3px rgba(0, 240, 255, 0.2);
 }
-.custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: #64748b; 
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #020205;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #1e1e3f;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #00f0ff;
 }
