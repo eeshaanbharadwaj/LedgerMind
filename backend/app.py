@@ -5,6 +5,11 @@ import numpy as np
 from sklearn.ensemble import IsolationForest
 from sklearn.preprocessing import StandardScaler
 import os
+from google import genai
+from dotenv import load_dotenv
+
+load_dotenv()
+client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for frontend
@@ -128,6 +133,64 @@ def analyze():
              return jsonify(result), 400
         return jsonify(result)
     except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/ai-insights', methods=['POST'])
+def ai_insights():
+    data = request.json
+    if not data or 'summary' not in data or 'results' not in data:
+        return jsonify({"error": "Missing analysis data"}), 400
+    
+    try:
+        summary = data['summary']
+        # Extract only essential info for AI to save tokens and avoid quota issues
+        risky_accounts = []
+        for r in data['results']:
+            if r['Risk_Level'] == 'High Risk':
+                risky_accounts.append({
+                    "ID": r['AccountID'],
+                    "Vol": r['Total_Volume'],
+                    "Score": r['Trust_Score'],
+                    "Z": r['Z_Score']
+                })
+        
+        # Limit to top 3 instead of 5 to be even safer with free tier quotas
+        risky_accounts = risky_accounts[:3]
+        
+        prompt = f"""
+        Act as a forensic auditor. Analyze this summary:
+        Accounts: {summary['total_accounts']} (Risky: {summary['high_risk_accounts']})
+        
+        Key Suspects:
+        {risky_accounts}
+        
+        Provide 3 bullet points for investigation. Be extremely concise. Use markdown.
+        """
+        
+        try:
+            # Using 2.0-flash-lite which typically has more lenient free quotas
+            response = client.models.generate_content(
+                model='gemini-2.0-flash-lite',
+                contents=prompt
+            )
+            
+            if not response.text:
+                return jsonify({"insights": "Analysis completed, but AI suggestion was empty. Try again in 60s."})
+            
+            return jsonify({"insights": response.text})
+        except Exception as api_error:
+            error_str = str(api_error)
+            print(f"Gemini API Error: {error_str}")
+            
+            if "429" in error_str or "quota" in error_str.lower():
+                return jsonify({
+                    "error": "Gemini Free Tier is currently busy. Please wait 60s. (Tip: Free API keys have strict 'tokens-per-minute' limits)"
+                }), 429
+                
+            return jsonify({"error": f"API Error: {error_str}"}), 500
+
+    except Exception as e:
+        print(f"General AI Route Error: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':

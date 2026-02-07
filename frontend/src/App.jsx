@@ -23,6 +23,8 @@ function App() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
+    const [aiInsights, setAiInsights] = useState(null);
+    const [aiLoading, setAiLoading] = useState(false);
 
     const handleFileChange = (e) => {
         setFile(e.target.files[0]);
@@ -52,6 +54,22 @@ function App() {
             setError(err.response?.data?.error || "An error occurred during analysis.");
         } finally {
             setLoading(false);
+        }
+    };
+
+    const getAIInsights = async () => {
+        if (!data) return;
+        setAiLoading(true);
+        setError(null); // Clear previous errors
+        try {
+            const response = await axios.post('http://127.0.0.1:5000/ai-insights', data);
+            setAiInsights(response.data.insights);
+        } catch (err) {
+            console.error(err);
+            const msg = err.response?.data?.error || "Failed to get AI insights.";
+            setError(msg);
+        } finally {
+            setAiLoading(false);
         }
     };
 
@@ -182,6 +200,37 @@ function App() {
                                 color="text-red-400"
                                 borderColor="border-red-500/30"
                             />
+                        </div>
+
+                        {/* AI Insights Section */}
+                        <div className="bg-card p-6 rounded-2xl border border-primary/20 shadow-xl bg-gradient-to-br from-card to-primary/5">
+                            <div className="flex items-center justify-between mb-4">
+                                <div className="flex items-center gap-3">
+                                    <div className="p-2 bg-primary/10 rounded-lg">
+                                        <svg className="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                                    </div>
+                                    <h2 className="text-xl font-bold text-gray-200">AI Auditor Suggestions</h2>
+                                </div>
+                                <button
+                                    onClick={getAIInsights}
+                                    disabled={aiLoading}
+                                    className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${aiLoading ? 'bg-gray-700 cursor-not-allowed' : 'bg-primary hover:bg-primary/80 text-white shadow-lg shadow-primary/20'}`}
+                                >
+                                    {aiLoading ? 'Analyzing...' : aiInsights ? 'Regenerate Insights' : 'Get AI Insights'}
+                                </button>
+                            </div>
+
+                            {aiInsights ? (
+                                <div className="prose prose-invert max-w-none text-gray-300 text-sm leading-relaxed animate-fade-in">
+                                    {aiInsights.split('\n').map((line, i) => (
+                                        <p key={i} className="mb-2">{line}</p>
+                                    ))}
+                                </div>
+                            ) : (
+                                <p className="text-gray-500 text-sm italic">
+                                    Click the button to generate AI-powered forensic suggestions based on the current analysis.
+                                </p>
+                            )}
                         </div>
 
                         {/* Charts Section */}
