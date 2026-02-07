@@ -141,9 +141,23 @@ def ai_insights():
     if not data or 'summary' not in data or 'results' not in data:
         return jsonify({"error": "Missing analysis data"}), 400
     
+    # 1. Generate Rule-Based Fallback Insights (Always ready)
+    def get_fallback_insights(summary, risky):
+        points = []
+        if summary['high_risk_accounts'] > 0:
+            points.append(f"🔍 **High Risk Alert**: {summary['high_risk_accounts']} accounts show significant behavioral deviation. Investigation of accounts with Trust Scores < 30 is recommended.")
+        
+        for r in risky[:2]:
+            if r['Z'] > 2:
+                points.append(f"🚩 **Volume Spike**: Account {r['ID']} has a Z-Score of {r['Z']}, indicating total volume is far above the cluster average.")
+            if r['Score'] < 20:
+                points.append(f"⚠️ **Severe Anomaly**: Account {r['ID']} is flagged for erratic transaction frequency and amount volatility.")
+        
+        points.append("📋 **Next Steps**: Conduct manual KYC verification for the top 3 flagged accounts and cross-reference with historical KYC data.")
+        return "### LedgerMind Rule-Based Analysis (Fallback)\n\n" + "\n\n".join(points)
+
     try:
         summary = data['summary']
-        # Extract only essential info for AI to save tokens and avoid quota issues
         risky_accounts = []
         for r in data['results']:
             if r['Risk_Level'] == 'High Risk':
@@ -154,40 +168,35 @@ def ai_insights():
                     "Z": r['Z_Score']
                 })
         
-        # Limit to top 3 instead of 5 to be even safer with free tier quotas
         risky_accounts = risky_accounts[:3]
-        
+        fallback_text = get_fallback_insights(summary, risky_accounts)
+
         prompt = f"""
         Act as a forensic auditor. Analyze this summary:
         Accounts: {summary['total_accounts']} (Risky: {summary['high_risk_accounts']})
-        
-        Key Suspects:
-        {risky_accounts}
-        
-        Provide 3 bullet points for investigation. Be extremely concise. Use markdown.
+        Suspects: {risky_accounts}
+        Provide 3 short bullet points for investigation. Use markdown.
         """
         
         try:
-            # Using 2.0-flash-lite which typically has more lenient free quotas
+            # Try Gemini
             response = client.models.generate_content(
                 model='gemini-2.0-flash-lite',
                 contents=prompt
             )
             
             if not response.text:
-                return jsonify({"insights": "Analysis completed, but AI suggestion was empty. Try again in 60s."})
+                return jsonify({"insights": fallback_text})
             
-            return jsonify({"insights": response.text})
+            return jsonify({"insights": "### AI Auditor Insights (Gemini)\n\n" + response.text})
+
         except Exception as api_error:
-            error_str = str(api_error)
-            print(f"Gemini API Error: {error_str}")
-            
-            if "429" in error_str or "quota" in error_str.lower():
-                return jsonify({
-                    "error": "Gemini Free Tier is currently busy. Please wait 60s. (Tip: Free API keys have strict 'tokens-per-minute' limits)"
-                }), 429
-                
-            return jsonify({"error": f"API Error: {error_str}"}), 500
+            # If Rate Limited or API Error, return the Fallback Insights
+            print(f"Gemini API Error (Using Fallback): {str(api_error)}")
+            return jsonify({
+                "insights": fallback_text,
+                "note": "Currently using high-availability rule-based engine due to API rate limits."
+            })
 
     except Exception as e:
         print(f"General AI Route Error: {str(e)}")
