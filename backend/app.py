@@ -188,7 +188,7 @@ def ai_insights():
             if not response.text:
                 return jsonify({"insights": fallback_text})
             
-            return jsonify({"insights": "### AI Auditor Insights (Gemini)\n\n" + response.text})
+            return jsonify({"insights": "### Smart Auditor Insights (Gemini)\n\n" + response.text})
 
         except Exception as api_error:
             # If Rate Limited or API Error, return the Fallback Insights

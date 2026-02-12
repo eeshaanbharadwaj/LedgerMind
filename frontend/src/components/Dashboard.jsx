@@ -5,7 +5,7 @@ import {
     PieChart, Pie, ScatterChart, Scatter, ZAxis
 } from 'recharts';
 import { UserButton } from "@clerk/clerk-react";
-import { ArrowUpRight, Upload, Download, Activity, ShieldAlert, Cpu } from 'lucide-react';
+import { ArrowUpRight, Upload, Download, BookOpen, ShieldAlert, Cpu } from 'lucide-react';
 
 // Enhanced Futuristic Card
 const SummaryCard = ({ title, value, color, icon: Icon }) => (
@@ -118,14 +118,14 @@ export default function Dashboard() {
                 <header className="flex justify-between items-center bg-[#0a0a1f]/60 px-6 py-4 rounded-full backdrop-blur-xl border border-white/5 shadow-2xl sticky top-4 z-50">
                     <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-primary to-secondary flex items-center justify-center shadow-[0_0_15px_rgba(0,240,255,0.4)]">
-                            <Activity className="text-black w-6 h-6" strokeWidth={2.5} />
+                            <BookOpen className="text-black w-6 h-6" strokeWidth={2.5} />
                         </div>
                         <div>
                             <h1 className="text-xl font-bold text-white tracking-wide">
                                 Ledger<span className="text-primary">Mind</span>
                             </h1>
                             <p className="text-[10px] text-gray-400 uppercase tracking-widest hidden md:block">
-                                Behavioral Forensics Engine
+                                Behavioral Insights Engine
                             </p>
                         </div>
                     </div>
@@ -182,7 +182,7 @@ export default function Dashboard() {
                                         {loading ? (
                                             <span className="flex items-center justify-center gap-2">
                                                 <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                                                Processing Matrix...
+                                                Analyzing Patterns...
                                             </span>
                                         ) : "Analyze Data"}
                                     </button>
@@ -201,7 +201,7 @@ export default function Dashboard() {
                                     title="Total Accounts"
                                     value={data.summary.total_accounts}
                                     color="from-blue-500 to-cyan-500"
-                                    icon={Activity}
+                                    icon={BookOpen}
                                 />
                                 <SummaryCard
                                     title="Low Risk Entities"
@@ -213,7 +213,7 @@ export default function Dashboard() {
                                     title="High Risk Entities"
                                     value={data.summary.high_risk_accounts}
                                     color="from-accent to-red-600"
-                                    icon={Cpu}
+                                    icon={ShieldAlert}
                                 />
                             </div>
 
@@ -221,7 +221,7 @@ export default function Dashboard() {
                             <div className="col-span-12 lg:col-span-8 bg-[#0a0a1f]/80 backdrop-blur-md p-6 rounded-2xl border border-white/5 shadow-xl min-h-[400px]">
                                 <div className="flex justify-between items-center mb-6">
                                     <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                                        <Activity className="text-primary w-5 h-5" /> Trust Score Distribution
+                                        <BookOpen className="text-primary w-5 h-5" /> Trust Score Distribution
                                     </h3>
                                     <div className="flex gap-2">
                                         <span className="flex items-center gap-2 text-xs text-gray-400"><span className="w-2 h-2 rounded-full bg-primary"></span> Safe</span>
@@ -280,7 +280,7 @@ export default function Dashboard() {
                                         className="w-full flex items-center justify-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 text-white px-4 py-3 rounded-xl text-sm font-semibold transition-all group"
                                     >
                                         <Download className="w-4 h-4 text-primary group-hover:scale-110 transition-transform" />
-                                        Export Forensic Report
+                                        Export Audit Report
                                     </button>
                                 </div>
 
@@ -324,11 +324,11 @@ export default function Dashboard() {
                                 <div className="flex items-center justify-between mb-6">
                                     <div className="flex items-center gap-4">
                                         <div className="p-3 bg-primary/10 rounded-xl border border-primary/20">
-                                            <Cpu className="w-6 h-6 text-primary animate-pulse-slow" />
+                                            <ShieldAlert className="w-6 h-6 text-primary animate-pulse-slow" />
                                         </div>
                                         <div>
-                                            <h2 className="text-2xl font-bold text-white">AI Forensic Auditor</h2>
-                                            <p className="text-sm text-gray-400">Automated behavioral anomaly detection engine</p>
+                                            <h2 className="text-2xl font-bold text-white">Smart Auditor Insights</h2>
+                                            <p className="text-sm text-gray-400">Behavioral anomaly detection and risk assessment</p>
                                         </div>
                                     </div>
                                     <button
@@ -364,7 +364,7 @@ export default function Dashboard() {
                             {/* Detailed Table */}
                             <div className="col-span-12 bg-[#0a0a1f]/80 rounded-2xl border border-white/5 shadow-xl overflow-hidden">
                                 <div className="p-6 border-b border-white/5 flex justify-between items-center">
-                                    <h2 className="text-lg font-bold text-white">Detailed Ledger Matrix</h2>
+                                    <h2 className="text-lg font-bold text-white">Detailed Activity Ledger</h2>
                                     <div className="text-xs text-gray-500 font-mono">LIVE_DATA_STREAM</div>
                                 </div>
                                 <div className="overflow-x-auto">

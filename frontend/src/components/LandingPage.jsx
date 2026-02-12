@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import { SignInButton, SignUpButton, UserButton, useUser } from "@clerk/clerk-react";
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowRight, ShieldCheck, Activity, FileText, Lock } from 'lucide-react';
+import { ArrowRight, ShieldCheck, Activity, FileText, BookOpen } from 'lucide-react';
 
 const LandingPage = () => {
     const { isSignedIn } = useUser();
@@ -30,7 +30,7 @@ const LandingPage = () => {
             <nav className="relative z-50 flex items-center justify-between px-8 py-6 max-w-7xl mx-auto">
                 <div className="flex items-center gap-2">
                     <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
-                        <Lock className="w-5 h-5 text-white" />
+                        <BookOpen className="w-5 h-5 text-white" />
                     </div>
                     <span className="text-xl font-bold tracking-tight">LedgerMind</span>
                 </div>
@@ -71,7 +71,7 @@ const LandingPage = () => {
                             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
                             <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
                         </span>
-                        AI-Powered Forensic Analysis
+                        Intelligent Behavioral Analysis
                     </div>
 
                     <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight mb-8 leading-tight">
@@ -82,7 +82,7 @@ const LandingPage = () => {
                     </h1>
 
                     <p className="text-lg md:text-xl text-gray-400 max-w-2xl mx-auto mb-12 leading-relaxed">
-                        LedgerMind uses advanced behavioral analysis to score transaction trust, identify outliers, and generate forensic reports instantly.
+                        LedgerMind uses advanced behavioral analysis to score transaction trust, identify outliers, and generate audit reports instantly.
                     </p>
 
                     <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -125,8 +125,8 @@ const LandingPage = () => {
                     />
                     <FeatureCard
                         icon={<FileText className="w-6 h-6 text-purple-400" />}
-                        title="Forensic Reports"
-                        description="Download detailed CSV reports ready for audit trails and compliance reviews."
+                        title="Audit-Ready Reports"
+                        description="Download detailed CSV reports ready for transparency and compliance reviews."
                     />
                 </div>
             </section>
